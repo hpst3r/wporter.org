@@ -1,0 +1,98 @@
+{{- $posts := where site.RegularPages "Type" "in" site.MainSections -}}
+{{- $isHome := .IsHome -}}
+{{- $termIndex := newScratch -}}
+{{- $termIndex.Set "terms" (dict) -}}
+{{- range $posts -}}
+    {{- range $term := .GetTerms "categories" -}}
+        {{- with $term.RelPermalink -}}
+            {{- $termIndex.SetInMap "terms" . (dict "permalink" (replace . " " "%20") "label" ($term.LinkTitle | default .)) -}}
+        {{- end -}}
+    {{- end -}}
+{{- end -}}
+{{- $categories := slice -}}
+{{- range $termIndex.Get "terms" -}}
+    {{- $categories = $categories | append . -}}
+{{- end -}}
+{{- $categories = sort $categories "label" "asc" -}}
+{{- $statusTemplate := i18n "posts.filter.status" | default "" -}}
+{{- $showFilters := and $isHome (gt (len $categories) 0) -}}
+
+<h2 id="posts">{{ i18n "posts.title" }}</h2>
+{{- if $isHome }}
+<div class="posts-search" data-pagefind-ignore>
+    <pagefind-modal-trigger placeholder="search posts"></pagefind-modal-trigger>
+</div>
+{{- end }}
+{{- if $showFilters }}
+<div class="category-filters" role="group" aria-label="{{ i18n "posts.filter.label" }}" data-status-template="{{ $statusTemplate }}" hidden>
+    <button type="button" data-category-filter="__all__" aria-pressed="true">{{ i18n "posts.filter.all" }}</button>
+    {{- range $categories }}
+    <button type="button" data-category-filter="{{ .permalink }}" aria-pressed="false">{{ .label }}</button>
+    {{- end }}
+</div>
+<p class="category-filter-status visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>
+<noscript><p><a href="{{ relLangURL "/categories/" }}">{{ i18n "posts.filter.browse" }}</a></p></noscript>
+{{- end }}
+<ul class="posts-list" aria-labelledby="posts">
+{{- range $posts }}
+    {{ .Render "li" }}
+{{- end }}
+</ul>
+
+{{- if $showFilters }}
+<script>
+(function () {
+    var ALL = '__all__';
+    var filters = document.querySelector('.category-filters');
+    if (!filters) { return; }
+
+    var buttons = Array.prototype.slice.call(filters.querySelectorAll('button[data-category-filter]'));
+    var rows = Array.prototype.slice.call(document.querySelectorAll('.posts-list .post[data-categories]'));
+    var status = document.querySelector('.category-filter-status');
+    var template = filters.getAttribute('data-status-template') || '';
+
+    function inCategory(row, selected) {
+        if (selected === ALL) { return true; }
+        var tokens = (row.getAttribute('data-categories') || '').split(' ');
+        for (var i = 0; i < tokens.length; i += 1) {
+            if (tokens[i] !== '' && tokens[i] === selected) { return true; }
+        }
+        return false;
+    }
+
+    function statusText(visible, total) {
+        var clean = template.replace(/<[^>]*>/g, '');
+        if (clean.indexOf('{visible}') === -1) { return visible + ' / ' + total; }
+        return clean.replace(/\{visible\}/g, String(visible)).replace(/\{total\}/g, String(total));
+    }
+
+    function selectCategory(selected) {
+        var matched = buttons.filter(function (button) {
+            return button.getAttribute('data-category-filter') === selected;
+        });
+        if (matched.length !== 1) { return; }
+
+        buttons.forEach(function (button) {
+            button.setAttribute('aria-pressed', button === matched[0] ? 'true' : 'false');
+        });
+
+        var visible = 0;
+        rows.forEach(function (row) {
+            var show = inCategory(row, selected);
+            row.hidden = !show;
+            if (show) { visible += 1; }
+        });
+
+        if (status) { status.textContent = statusText(visible, rows.length); }
+    }
+
+    buttons.forEach(function (button) {
+        button.addEventListener('click', function () {
+            selectCategory(button.getAttribute('data-category-filter'));
+        });
+    });
+
+    filters.hidden = false;
+}());
+</script>
+{{- end }}

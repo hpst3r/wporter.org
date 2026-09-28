@@ -13,7 +13,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
 
-    {{ $resourceFiles := slice "css/main.css" "css/chroma.css" "css/width.css" }}
+    {{ $resourceFiles := slice "css/main.css" "css/chroma.css" "css/width.css" "css/search.css" }}
 
     {{ $resources := slice -}}
 
@@ -30,6 +30,7 @@
 
     <link rel="stylesheet" href="{{ $css.RelPermalink }}">
     <link rel="stylesheet" href="{{ "pagefind/pagefind-component-ui.css" | relURL }}">
+    <pagefind-config bundle-path="{{ "pagefind/" | relURL }}" hidden></pagefind-config>
     <script type="module" src="{{ "pagefind/pagefind-component-ui.js" | relURL }}"></script>
     <script>
         (() => {
