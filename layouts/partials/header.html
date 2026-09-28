@@ -1,0 +1,15 @@
+<header id="banner">
+    <h2><a href="{{ .Site.BaseURL }}">{{ .Site.Title }}</a></h2>
+    <nav>
+        <ul>
+            {{ range .Site.Menus.main.ByWeight -}}
+            <li>
+                {{ .Pre }}<a href="{{ .URL }}" title="{{ .Title }}">{{- .Name -}}</a>{{ .Post }}
+            </li>
+            {{- end }}
+            <li data-pagefind-ignore>
+                <pagefind-modal-trigger placeholder="search" hide-shortcut></pagefind-modal-trigger>
+            </li>
+        </ul>
+    </nav>
+</header>

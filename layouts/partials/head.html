@@ -1,0 +1,51 @@
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{ with .Site.Params.description -}}
+    <meta name="description" content="{{ . }}">
+    {{ end }}
+    {{ printf `<link rel="shortcut icon" href="%s">` ("favicon.ico" | absURL) | safeHTML }}
+    {{ with .OutputFormats.Get "rss" -}}
+        {{ printf `<link rel="%s" type="%s" href="%s" title="%s">` .Rel .MediaType.Type .Permalink $.Site.Title | safeHTML }}
+    {{ end -}}
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+
+    {{ $resourceFiles := slice "css/main.css" "css/chroma.css" "css/width.css" }}
+
+    {{ $resources := slice -}}
+
+    {{ range $path := $resourceFiles }}
+      {{ $resources = $resources | append (resources.Get $path) }}
+    {{ end }}
+
+    {{ $dark := .Site.Params.dark | default "auto" -}}
+    {{ if not (eq $dark "off") -}}
+        {{ $resources = $resources | append (resources.Get "css/dark.css" | resources.ExecuteAsTemplate "dark.css" .) -}}
+    {{ end -}}
+
+    {{ $css := $resources | resources.Concat "css/style.css" | minify }}
+
+    <link rel="stylesheet" href="{{ $css.RelPermalink }}">
+    <link rel="stylesheet" href="{{ "pagefind/pagefind-component-ui.css" | relURL }}">
+    <script type="module" src="{{ "pagefind/pagefind-component-ui.js" | relURL }}"></script>
+    <script>
+        (() => {
+            const root = document.documentElement;
+            const mode = {{ $dark | jsonify | safeJS }};
+            const darkPreference = window.matchMedia("(prefers-color-scheme: dark)");
+            const syncPagefindTheme = () => {
+                const useDark = mode === "on" || (mode === "auto" && darkPreference.matches);
+                root.dataset.pfTheme = useDark ? "dark" : "light";
+            };
+
+            syncPagefindTheme();
+            darkPreference.addEventListener?.("change", syncPagefindTheme);
+        })();
+    </script>
+
+    <link rel="canonical" href="{{ .Permalink }}" />
+    <title>{{ .Title }}</title>
+</head>
